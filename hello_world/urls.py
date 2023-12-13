@@ -20,10 +20,13 @@ from django.conf.urls.static import static
 
 from hello_world.core import views as core_views
 
+from rssfeeds.views import feed_list
+
 urlpatterns = [
     path("", core_views.index),
     path("admin/", admin.site.urls),
     path("__reload__/", include("django_browser_reload.urls")),
+    path('feeds/', feed_list, name='feed-list'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

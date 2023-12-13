@@ -1,0 +1,23 @@
+<!-- your_app/templates/feed_list.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RSS Feed</title>
+</head>
+<body>
+    <h1>RSS Feed Items</h1>
+    <ul>
+        {% for feed in feeds %}
+            <li>
+                <strong><a href="{{ feed.link }}">{{ feed.title }}</a></strong>
+                <p>{{ feed.description }}</p>
+                <p>Published on: {{ feed.pub_date }}</p>
+            </li>
+        {% empty %}
+            <li>No feed items available.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
