@@ -1,17 +1,19 @@
 # GitHub RSSFeeds
 
-Welcome to your shiny new Codespace running Django! We've got everything fired up and running for you to explore Django.
+This is a Django project. 
 
-You've got a blank canvas to work on from a git perspective as well. There's a single initial commit with the what you're seeing right now - where you go from here is up to you!
+## Django Related 
 
 ```python
-python manage.py collectstatic
+python3 manage.py collectstatic
 ```
 To run this application:
 
 ```python
-python manage.py runserver
+python3 manage.py runserver
 ```
+
+## RabbitMQ Server
 
 You can start the RabbitMQ server using the following command:
 ```python
@@ -39,6 +41,8 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 ```
 This configuration uses the default RabbitMQ user (guest), which is sufficient for development purposes.
+
+## Celery app
 
 In your Django project (same level as settings.py), create a file named celery.py to define your Celery app:
 ```python
@@ -79,7 +83,23 @@ __all__ = ('celery_app',)
 
 ```
 Finally, to start processing tasks, run the Celery worker:
-```python
+```
 celery -A your_project_name worker -l info
+```
 
+Run the following to watch workers running in your celery app:
+
+```
+celery -A rssfeeds worker --loglevel=info
+```
+Run the following to watch beats for your celery app:
+
+```
+celery -A rssfeeds beat -l info
+```
+
+## Data related commands
+
+```python
+python3 manage.py shell
 ```

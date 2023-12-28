@@ -1,41 +1,49 @@
 from django.core.management.base import BaseCommand
-from rssfeeds.models import RSSFeedItem
+import requests
 import feedparser
 from datetime import datetime
 import pytz
+from bs4 import BeautifulSoup
+from rssfeeds.models import Article  # Adjust this import to your project structure
 
 class Command(BaseCommand):
-    help = 'Fetches and parses an RSS feed and stores it in the database'
+    help = 'Fetches RSS feeds and stores them in the database'
 
-    def handle(self, *args, **kwargs):
-        self.stdout.write("Starting to fetch and parse the RSS feed...")
-        feed_url = 'https://www.investing.com/rss/stock_stock_picks.rss'  # Replace with your feed URL
+    def handle(self, *args, **options):
+        rss_url = 'https://www.investing.com/rss/news_25.rss'
+        self.fetch_and_store_rss(rss_url)
 
-        feed = feedparser.parse(feed_url)
-        if feed.bozo:
-            self.stdout.write(f"Error parsing feed: {feed.bozo_exception}")
-            return
+    def scrape_article_content(self, url):
+        try:
+            response = requests.get(url)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            # Adjust the selector according to the structure of the web page
+            content = soup.find('div', class_='article-content').get_text(strip=True)
+            return content
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Error scraping article content: {e}"))
+            return ""
+
+    def fetch_and_store_rss(self, url):
+        response = requests.get(url)
+        raw_data = response.text
+
+        feed = feedparser.parse(raw_data)
 
         for entry in feed.entries:
-            pub_date = self.parse_date(entry.get('published_parsed'))
+            title = entry.title
+            link = entry.link
+            author = entry.get('author', '')
 
-            # Create a new RSSFeedItem or update existing one
-            rss_item, created = RSSFeedItem.objects.update_or_create(
-                link=entry.get('link', '#'),
-                defaults={
-                    'title': entry.get('title', 'No Title'),
-                    'pub_date': pub_date,
-                    'author': entry.get('author', 'Unknown Author'),
-                    'description': entry.get('description', 'No Description')
-                }
-            )
-
-            if created:
-                self.stdout.write(f'Added new RSS feed item: {rss_item.title}')
+            if entry.published_parsed:
+                pub_date = datetime(*entry.published_parsed[:6])
+                pub_date = pytz.utc.localize(pub_date)
             else:
-                self.stdout.write(f'Updated existing RSS feed item: {rss_item.title}')
+                continue
 
-    def parse_date(self, published_parsed):
-        if published_parsed:
-            return datetime(*published_parsed[:6], tzinfo=pytz.utc)
-        return None
+            content = self.scrape_article_content(link)
+
+            if not Article.objects.filter(link=link).exists():
+                article = Article(title=title, pub_date=pub_date, author=author, link=link, content=content)
+                article.save()
+                self.stdout.write(self.style.SUCCESS(f'Successfully saved article: {title}'))
