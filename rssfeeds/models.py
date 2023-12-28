@@ -1,11 +1,11 @@
 from django.db import models
 
-class RSSFeedItem(models.Model):
-    title = models.CharField(max_length=255)
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    pub_date = models.DateTimeField()
+    author = models.CharField(max_length=100, blank=True, null=True)
     link = models.URLField()
-    pub_date = models.DateTimeField(null=True, blank=True)
-    author = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
+    content = models.TextField(blank=True, null=True)  # Field for article content
 
     def __str__(self):
         return self.title
